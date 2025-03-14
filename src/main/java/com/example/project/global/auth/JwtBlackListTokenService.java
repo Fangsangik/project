@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 public class JwtBlackListTokenService {
 
     private final RedisTemplate<String, String> redisTemplate;
-    private static final String BLACKLIST_PREFIX = "blackList";
+    private static final String BLACKLIST_PREFIX = "blacklisted";
 
     /**
      * 토큰을 블랙리스트에 추가
@@ -20,7 +20,8 @@ public class JwtBlackListTokenService {
      * @param expiration 토큰 만료 시간
      */
     public void addBlackList(String token, long expiration) {
-        redisTemplate.opsForValue().set(BLACKLIST_PREFIX + token, "BLACKLISTED", expiration, TimeUnit.MILLISECONDS);
+        String key = token.startsWith(BLACKLIST_PREFIX) ? token : BLACKLIST_PREFIX + "." + token; // 중복 방지
+        redisTemplate.opsForValue().set(key, "blacklisted", expiration, TimeUnit.MILLISECONDS);
     }
 
     /**
