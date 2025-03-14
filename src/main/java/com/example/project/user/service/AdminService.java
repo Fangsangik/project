@@ -1,6 +1,5 @@
 package com.example.project.user.service;
 
-import com.example.project.global.auth.JwtProvider;
 import com.example.project.global.exception.CustomException;
 import com.example.project.global.exception.type.UserErrorCode;
 import com.example.project.user.domain.User;
@@ -29,6 +28,12 @@ public class AdminService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * 관리자 계정 생성
+     *
+     * @param adminRequestDto 관리자 계정 생성 요청 DTO
+     * @return UserResponseDto 관리자 계정 생성 응답 DTO
+     */
     @Transactional
     public UserResponseDto createAdmin(AdminRequestDto adminRequestDto) {
         if (!adminSecretKey.equals(adminRequestDto.getSecretKey())) { // 보안 키 검증
@@ -53,10 +58,15 @@ public class AdminService {
         return UserResponseDto.toDto(savedUser);
     }
 
-
+    /**
+     * 관리자 권한 변경
+     * @param id
+     * @param user
+     * @return response
+     */
     @Transactional
     public UserResponseDto updateRole(Long id, User user) {
-        if (user.getRoles().stream().noneMatch(role -> role == UserRole.ADMIN)) { // ✅ 수정: contains 대신 stream().noneMatch() 사용
+        if (user.getRoles().stream().noneMatch(role -> role == UserRole.ADMIN)) {
             throw new CustomException(UserErrorCode.ACCESS_DENIED);
         }
 

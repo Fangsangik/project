@@ -48,6 +48,7 @@ public class SpringSecurityConfig {
                                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.INCLUDE, DispatcherType.ERROR).permitAll()
                                 .requestMatchers(UrlConst.ADMIN_INTERCEPTOR_PATH).hasRole("ADMIN")
+                                .requestMatchers("/users/logout").authenticated()
                                 .anyRequest().authenticated()
                 )
                 .exceptionHandling(handler -> handler

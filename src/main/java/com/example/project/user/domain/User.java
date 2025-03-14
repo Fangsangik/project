@@ -2,6 +2,7 @@ package com.example.project.user.domain;
 
 import com.example.project.user.type.UserRole;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,8 @@ public class User {
     private String username;
     private String password;
     private String nickname;
+    @Getter
+    private boolean deleted = false;
 
     @ElementCollection
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
@@ -27,15 +30,20 @@ public class User {
     private Set<UserRole> roles = new HashSet<>();
 
     @Builder
-    public User(String username, String password, String nickname, Set<UserRole> roles) {
+    public User(String username, String password, String nickname, Set<UserRole> roles, boolean deleted) {
         this.username = username;
         this.password = password;
         this.nickname = nickname;
         this.roles = roles;
+        this.deleted = deleted;
     }
 
-    public void updateRoles(Set<UserRole> roles) {
-        this.roles.clear();
-        this.roles.add(UserRole.ADMIN);
+    public void update(String newPassword, String nickname) {
+        this.password = newPassword;
+        this.nickname = nickname;
+    }
+
+    public void softDelete() {
+        this.deleted = true;
     }
 }
