@@ -73,10 +73,11 @@ public class AdminService {
         User findUser = userRepository.findById(id)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
+        findUser.setRoles(new HashSet<>(findUser.getRoles()));
         findUser.getRoles().clear(); // ✅ 기존 역할 삭제
         findUser.getRoles().add(UserRole.ADMIN); // ✅ ADMIN 추가
 
-        log.info("✅ 변경된 유저 정보: username={}, roles={}", findUser.getUsername(), findUser.getRoles());
+        log.info("변경된 유저 정보: username={}, roles={}", findUser.getUsername(), findUser.getRoles());
 
         User savedUser = userRepository.save(findUser);
         UserResponseDto response = UserResponseDto.toDto(savedUser);

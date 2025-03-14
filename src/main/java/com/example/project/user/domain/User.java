@@ -46,4 +46,8 @@ public class User {
     public void softDelete() {
         this.deleted = true;
     }
+
+    public void setRoles(HashSet<UserRole> userRoles) {
+        this.roles = userRoles;
+    }
 }
