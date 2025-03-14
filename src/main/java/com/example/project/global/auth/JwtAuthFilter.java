@@ -25,17 +25,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService customUserDetailsService;
-    private final List<String> permitAllList = List.of("/",
-            "/users",
-            "/admin",
-            "/users/login",
-            "/v3/api-docs/**",
-            "/v3/api-docs.yaml",
-            "/swagger-ui/**",
-            "/swagger-ui.html",
-            "/swagger-resources/**",
-            "/webjars/**");
+    private final JwtBlackListTokenService jwtBlackListTokenService;
+    private final List<String> permitAllList = List.of("/", "/users/signup", "/admin", "/users/login",  "/v3/api-docs/**", "/v3/api-docs.yaml", "/swagger-ui/**", "/swagger-ui.html", "/swagger-resources/**", "/webjars/**");
 
+    /**
+     * 토큰을 검증하고 인증하는 메서드.
+     * @param request
+     * @param response
+     * @param filterChain
+     * @throws ServletException
+     * @throws IOException
+     * @throws ServletException
+     * @throws IOException
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException, ServletException, IOException {
         String requestURI = request.getRequestURI();
@@ -47,6 +49,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = getTokenFromRequest(request);
         if (token != null && jwtProvider.validToken(token)) {
+            if (jwtBlackListTokenService.isBlackListed(token)) {
+                log.warn("❌ 블랙리스트 토큰: {}", token);
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그아웃된 토큰입니다.");
+                return;
+            }
+
             String username = jwtProvider.getUsername(token);
             log.info("✅ 유효한 토큰. 사용자명: {}", username);
 

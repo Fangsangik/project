@@ -1,14 +1,16 @@
 package com.example.project.global.auth;
 
+import com.example.project.user.domain.User;
+import com.example.project.user.repository.UserRepository;
 import com.example.project.user.type.UserRole;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -20,7 +22,6 @@ import java.util.*;
  * <p>토큰의 생성, 추출, 만료 확인 등의 기능.</p>
  */
 @Component
-@ConfigurationProperties(prefix = "jwt")
 @RequiredArgsConstructor
 @Slf4j
 @Getter
@@ -29,13 +30,30 @@ public class JwtProvider {
     @Value("${jwt.secret_key}")
     private String secret;
 
+    @Getter
     @Value("${jwt.expiry-millis}")
     private long expiryMillis;
 
+    @Getter
+    @Value("${jwt.refresh-expiry-millis}")
+    private long refreshExpiryMillis;
 
-    public String generateAccessToken(String username, Set<UserRole> userRoles) {
+    private final UserRepository userRepository;
+
+
+    /**
+     * 인증 객체를 받아와 액세스 토큰을 생성하는 메서드.
+     *
+     * @param authentication 인증 객체
+     * @return 생성된 액세스 토큰
+     */
+    public String generateAccessToken(Authentication authentication) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + this.expiryMillis);
+
+        String username = authentication.getName();
+        // UserRoles 조회 추가
+        Set<UserRole> userRoles = getUserRoles(username);
 
         List<String> roles = userRoles.stream()
                 .map(UserRole::getRoleName)
@@ -53,9 +71,40 @@ public class JwtProvider {
         return token;
     }
 
+
     public String getUsername(String token) {
         return getClaims(token).getSubject();
     }
+
+    /**
+     * 리프레시 토큰 생성.
+     *
+     * @param authentication 인증 객체
+     * @return 생성된 리프레시 토큰
+     */
+    public String generateRefreshToken(Authentication authentication) {
+        String username = authentication.getName();
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + this.refreshExpiryMillis);
+
+        return Jwts.builder()
+                .subject(username)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)), Jwts.SIG.HS256)
+                .compact();
+    }
+
+    public long getExpiration(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.getExpiration().getTime();
+    }
+
 
     public boolean validToken(String token) {
         try {
@@ -79,6 +128,12 @@ public class JwtProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    private Set<UserRole> getUserRoles(String username) {
+        return userRepository.findByUsername(username) // DB에서 User 조회
+                .map(User::getRoles) // User 객체에서 역할(Role) 가져오기
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 }
 

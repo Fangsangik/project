@@ -1,7 +1,6 @@
 package com.example.project.global.exception.dto;
 
 import com.example.project.global.exception.CustomException;
-import com.example.project.global.exception.ExceptionType;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
