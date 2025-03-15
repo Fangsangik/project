@@ -135,17 +135,17 @@ public class UserService {
     }
 
     /**
-     * 회원 조회
+     * 회원 정보 조회
      *
-     * @param userId 회원 ID
-     * @return UserResponseDto 회원 응답 DTO
+     * @param user 회원 정보
+     * @return UserResponseDto 회원 정보 응답 DTO
      */
     @Transactional(readOnly = true)
-    public UserResponseDto findUser(Long userId) {
-        User user = userRepository.findById(userId)
+    public UserResponseDto findUser(User user) {
+        User findUser = userRepository.findById(user.getId())
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        return UserResponseDto.toDto(user);
+        return UserResponseDto.toDto(findUser);
     }
 
     @Transactional

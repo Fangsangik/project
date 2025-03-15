@@ -50,9 +50,10 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "회원 조회 성공"),
             @ApiResponse(responseCode = "404", description = "회원 정보를 찾을 수 없음")
     })
-    @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDto> getUser(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.findUser(id));
+    @GetMapping
+    public ResponseEntity<UserResponseDto> getUser(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = UserInfo.getUser(userDetails);
+        return ResponseEntity.ok(userService.findUser(user));
     }
 
     @Operation(summary = "로그아웃", description = "사용자가 로그아웃을 수행합니다.")
