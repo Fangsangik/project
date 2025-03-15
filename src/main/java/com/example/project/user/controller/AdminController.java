@@ -8,6 +8,7 @@ import com.example.project.user.service.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -34,7 +35,7 @@ public class AdminController {
             @ApiResponse(responseCode = "409", description = "이미 존재하는 관리자 계정")
     })
     @PostMapping
-    public ResponseEntity<UserResponseDto> createAdmin(@RequestBody AdminRequestDto requestDto) {
+    public ResponseEntity<UserResponseDto> createAdmin(@Valid @RequestBody AdminRequestDto requestDto) {
         UserResponseDto responseDto = adminService.createAdmin(requestDto);
 
         log.info("✅ 관리자 회원가입 완료: username={}", responseDto.getUsername());

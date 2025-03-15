@@ -7,6 +7,7 @@ import com.example.project.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +30,7 @@ public class UserController {
             @ApiResponse(responseCode = "409", description = "이미 존재하는 사용자")
     })
     @PostMapping("/signup")
-    public ResponseEntity<UserResponseDto> createUser(@RequestBody UserRequestDto requestDto) {
+    public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto requestDto) {
         return ResponseEntity.ok(userService.createUser(requestDto));
     }
 
@@ -39,7 +40,7 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "잘못된 로그인 정보")
     })
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto requestDto) {
+    public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto requestDto) {
         return ResponseEntity.ok(userService.login(requestDto));
     }
 
@@ -72,9 +73,8 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음")
     })
     @PatchMapping
-    public ResponseEntity<UserUpdateResponseDto> updateUser(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody UserUpdateRequestDto requestDto) {
+    public ResponseEntity<UserUpdateResponseDto> updateUser(@AuthenticationPrincipal UserDetails userDetails,
+                                                            @Valid @RequestBody UserUpdateRequestDto requestDto) {
         User user = UserInfo.getUser(userDetails);
         return ResponseEntity.ok(userService.updateUser(user, requestDto));
     }
@@ -87,9 +87,8 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음")
     })
     @DeleteMapping
-    public ResponseEntity<Void> deleteUser(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody DeleteRequestDto deleteRequestDto) {
+    public ResponseEntity<Void> deleteUser(@AuthenticationPrincipal UserDetails userDetails,
+                                           @Valid @RequestBody DeleteRequestDto deleteRequestDto) {
         User user = UserInfo.getUser(userDetails);
         userService.deleteUser(user, deleteRequestDto);
         return ResponseEntity.ok().build();
