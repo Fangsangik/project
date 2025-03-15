@@ -26,7 +26,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtBlackListTokenService jwtBlackListTokenService;
-    private final List<String> permitAllList = List.of("/", "/users/signup", "/admin", "/users/login",  "/v3/api-docs/**", "/v3/api-docs.yaml", "/swagger-ui/**", "/swagger-ui.html", "/swagger-resources/**", "/webjars/**");
+    private final List<String> permitAllList = List.of("/", "/users/signup", "/admin", "/users/login",  "/v3/api-docs/**", "/v3/api-docs.yaml", "/swagger-ui/**", "/swagger-ui.html", "/swagger-resources/**", "/webjars/**", "/h2-console/**", "/h2-console/tables.do", "/h2-console/query.jsp", "/h2-console/help.jsp");
 
     /**
      * 토큰을 검증하고 인증하는 메서드.
@@ -41,7 +41,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException, ServletException, IOException {
         String requestURI = request.getRequestURI();
-        if (permitAllList.contains(requestURI)) {
+        // 예외 URL 확인
+        if (permitAllList.stream().anyMatch(requestURI::startsWith)) {
             log.info("✅ 인증 예외 경로, 필터 통과: {}", requestURI);
             filterChain.doFilter(request, response);
             return;

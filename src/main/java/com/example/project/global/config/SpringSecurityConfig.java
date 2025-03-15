@@ -39,6 +39,7 @@ public class SpringSecurityConfig {
                                         "connect-src 'self' https://petstore.swagger.io https://validator.swagger.io; " +
                                         "frame-src 'self';"
                         ))
+                        .frameOptions(frame -> frame.disable())
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
