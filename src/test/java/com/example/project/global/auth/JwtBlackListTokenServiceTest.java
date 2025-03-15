@@ -9,6 +9,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import java.util.concurrent.TimeUnit;
+
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -17,7 +18,6 @@ public class JwtBlackListTokenServiceTest {
     @Mock
     private RedisTemplate<String, String> redisTemplate;
 
-    //Spring Data Redis에서 제공하는 Redis의 String 자료구조를 쉽게 다룰 수 있도록 도와주는 인스턴스
     @Mock
     private ValueOperations<String, String> valueOperations;
 
@@ -27,8 +27,10 @@ public class JwtBlackListTokenServiceTest {
     @Test
     void addBlackList_ShouldAddTokenToRedis() {
         // Given
-        String token = "blacklisted.token";
+        String token = "token";
         long expirationTime = 60000L;
+        String expectedKey = "blacklisted." + token;  // 실제 서비스 코드에서 사용하는 키 형식 적용
+        String expectedValue = "LOGGED_OUT";
 
         // RedisTemplate의 opsForValue() 모킹
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
@@ -37,6 +39,6 @@ public class JwtBlackListTokenServiceTest {
         jwtBlackListTokenService.addBlackList(token, expirationTime);
 
         // Then
-        verify(valueOperations, times(1)).set(token, "blacklisted", expirationTime, TimeUnit.MILLISECONDS);
+        verify(valueOperations, times(1)).set(expectedKey, expectedValue, expirationTime, TimeUnit.MILLISECONDS);
     }
 }
