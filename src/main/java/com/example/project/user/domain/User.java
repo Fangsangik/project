@@ -13,6 +13,7 @@ import java.util.Set;
 @Entity
 @Getter
 @NoArgsConstructor
+@Table(name = "users")
 public class User {
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
