@@ -26,7 +26,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtBlackListTokenService jwtBlackListTokenService;
-    private final List<String> permitAllList = List.of("/", "/users/signup", "/admin", "/users/login",  "/v3/api-docs/**", "/v3/api-docs.yaml", "/swagger-ui/**", "/swagger-ui.html", "/swagger-resources/**", "/webjars/**", "/h2-console/**", "/h2-console/tables.do", "/h2-console/query.jsp", "/h2-console/help.jsp");
+    private final List<String> permitAllList = List.of("/", "/users/signup", "/admin", "/users/login",  "/v3/api-docs/**", "/v3/api-docs.yaml", "/swagger-ui/**", "/swagger-ui.html", "/swagger-resources/**", "/webjars/**", "/h2-console/**", "/h2-console/tables.do", "/h2-console/query.jsp", "/h2-console/help.jsp", "/favicon.ico");
 
     /**
      * 토큰을 검증하고 인증하는 메서드.
