@@ -31,7 +31,7 @@ public class JwtRefreshTokenService {
     public void saveRefreshToken(String username, String token) {
         String key = REFRESH_TOKEN_PREFIX + username;
         log.info("🟢 saveRefreshToken() 호출됨 - Key: {}, 호출 스택: {}", key, Thread.currentThread().getStackTrace());
-        redisTemplate.opsForValue().set(key + username, token, jwtProvider.getRefreshExpiryMillis(), TimeUnit.MILLISECONDS);
+        redisTemplate.opsForValue().set(key, token, jwtProvider.getRefreshExpiryMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -53,14 +53,14 @@ public class JwtRefreshTokenService {
             User user = userRepository.findByUsername(username)
                     .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-            String key = REFRESH_TOKEN_PREFIX + user.getId();
+            String key = REFRESH_TOKEN_PREFIX + user.getUsername();
 
             Boolean deleted = redisTemplate.delete(key);
 
             if (Boolean.TRUE.equals(deleted)) {
-                log.info("리프레시 토큰 삭제 userId : {}", user.getId());
+                log.info("리프레시 토큰 삭제 username : {}", user.getUsername());
             } else {
-                log.warn("해당하는 리프레시 토큰 조회 실패 userId : {}", user.getId());
+                log.warn("해당하는 리프레시 토큰 조회 실패 username : {}", user.getUsername());
             }
         } catch (Exception ex) { //삭제 실패시 에러 반환
             log.error("리프레시 토큰 삭제 실패", ex);

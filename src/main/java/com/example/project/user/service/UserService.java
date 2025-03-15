@@ -8,8 +8,10 @@ import com.example.project.user.domain.User;
 import com.example.project.user.dto.*;
 import com.example.project.user.repository.UserRepository;
 import com.example.project.user.type.UserRole;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -17,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -99,29 +102,36 @@ public class UserService {
      * 로그아웃
      */
     @Transactional
-    public void logout() {
+    public void logout(HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         log.debug("Authentication 객체: {}", authentication);
 
-        if (authentication == null) {
-            log.error("로그아웃 실패: Authentication 객체가 NULL입니다.");
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails)) {
+            log.error("로그아웃 실패: 인증 객체가 존재하지 않거나 CustomUserDetails가 아닙니다.");
             throw new CustomException(AuthErrorCode.UNAUTHORIZED_TOKEN);
         }
 
-        if (!(authentication.getPrincipal() instanceof CustomUserDetails)) {
-            log.error("로그아웃 실패: Principal이 CustomUserDetails가 아닙니다. Principal: {}", authentication.getPrincipal());
-            throw new CustomException(AuthErrorCode.UNAUTHORIZED_TOKEN);
-        }
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         log.info("로그아웃: {}", userDetails.getUsername());
 
-        String accessToken = jwtProvider.generateAccessToken(authentication);
+        // 요청에서 기존 액세스 토큰을 가져오기
+        String accessToken = getTokenFromRequest(request);
+        if (accessToken == null || !jwtProvider.validToken(accessToken)) {
+            log.error("로그아웃 실패: 유효한 액세스 토큰이 제공되지 않음");
+            throw new CustomException(AuthErrorCode.UNAUTHORIZED_TOKEN);
+        }
+
         long expiration = jwtProvider.getExpiration(accessToken) - System.currentTimeMillis();
 
+        // 리프레시 토큰 삭제
         jwtRefreshTokenService.deleteRefreshToken(authentication);
-        jwtBlackListTokenService.addBlackList(accessToken, expiration);
-        SecurityContextHolder.clearContext();
 
+        // 블랙리스트에 기존 액세스 토큰 추가
+        jwtBlackListTokenService.addBlackList(accessToken, expiration);
+
+        // SecurityContext 초기화
+        SecurityContextHolder.clearContext();
+        log.info("🚀 로그아웃 완료: 토큰 블랙리스트 추가 완료");
     }
 
     /**
@@ -169,5 +179,14 @@ public class UserService {
         }
         user.softDelete();
         userRepository.save(user);
+    }
+
+    private String getTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
+        final String headerPrefix = AuthenticationScheme.generateType(AuthenticationScheme.BEARER);
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(headerPrefix)) {
+            return bearerToken.substring(headerPrefix.length()).trim();
+        }
+        return null;
     }
 }

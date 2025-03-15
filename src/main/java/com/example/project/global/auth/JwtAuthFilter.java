@@ -42,7 +42,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException, ServletException, IOException {
         String requestURI = request.getRequestURI();
         // 예외 URL 확인
-        if (permitAllList.stream().anyMatch(requestURI::startsWith)) {
+        if (permitAllList.contains(requestURI)) {
             log.info("✅ 인증 예외 경로, 필터 통과: {}", requestURI);
             filterChain.doFilter(request, response);
             return;

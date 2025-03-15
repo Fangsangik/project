@@ -7,6 +7,7 @@ import com.example.project.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,8 +61,8 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자")
     })
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
-        userService.logout();
+    public ResponseEntity<Void> logout(HttpServletRequest request) {
+        userService.logout(request);
         return ResponseEntity.ok().build();
     }
 
