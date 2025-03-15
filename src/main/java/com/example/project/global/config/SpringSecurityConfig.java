@@ -48,6 +48,7 @@ public class SpringSecurityConfig {
                         auth.requestMatchers(UrlConst.WHITE_LIST).permitAll()
                                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.INCLUDE, DispatcherType.ERROR).permitAll()
+                                .requestMatchers("/", "/favicon.ico").permitAll()
                                 .requestMatchers(UrlConst.ADMIN_INTERCEPTOR_PATH).hasRole("ADMIN")
                                 .requestMatchers("/users/logout").authenticated()
                                 .requestMatchers("/secure-endpoint").authenticated() //filter test용
