@@ -1,9 +1,11 @@
 package com.example.project.user.service;
 
+import com.example.project.global.config.AdminPermissionChecker;
 import com.example.project.global.exception.CustomException;
 import com.example.project.global.exception.type.UserErrorCode;
 import com.example.project.user.domain.User;
 import com.example.project.user.dto.AdminRequestDto;
+import com.example.project.user.dto.RoleChangeRequestDto;
 import com.example.project.user.dto.UserResponseDto;
 import com.example.project.user.repository.UserRepository;
 import com.example.project.user.type.UserRole;
@@ -14,9 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Set;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -25,6 +24,7 @@ public class AdminService {
     @Value("${admin.secret.key}")
     private String adminSecretKey;
 
+    private final AdminPermissionChecker adminPermissionChecker;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -44,14 +44,11 @@ public class AdminService {
             throw new CustomException(UserErrorCode.USER_ALREADY_EXISTS);
         }
 
-        Set<UserRole> roles = new HashSet<>();
-        roles.add(UserRole.ADMIN);
-
         User user = User.builder()
                 .username(adminRequestDto.getUsername())
                 .password(passwordEncoder.encode(adminRequestDto.getPassword()))
                 .nickname(adminRequestDto.getNickname())
-                .roles(roles)
+                .role(UserRole.ADMIN)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -65,26 +62,18 @@ public class AdminService {
      * @return response
      */
     @Transactional
-    public UserResponseDto updateRole(Long id, User user) {
-        if (user.getRoles().stream().noneMatch(role -> role == UserRole.ADMIN)) {
-            throw new CustomException(UserErrorCode.ACCESS_DENIED);
-        }
+    public UserResponseDto updateRole(Long id, User user, RoleChangeRequestDto requestDto) {
+        // 1) ADMIN 권한 확인 (단위 테스트 및 AOP 프록시 양쪽에서 검증)
+        adminPermissionChecker.checkAdmin(user);
 
-        User findUser = userRepository.findById(id)
+        // 2) 대상 유저 조회
+        User target = userRepository.findById(id)
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
 
-        findUser.setRoles(new HashSet<>(findUser.getRoles()));
-        findUser.getRoles().clear(); // ✅ 기존 역할 삭제
-        findUser.getRoles().add(UserRole.ADMIN); // ✅ ADMIN 추가
+        // 3) 역할 변경
+        target.changeRole(requestDto.getUserRole());
 
-        log.info("변경된 유저 정보: username={}, roles={}", findUser.getUsername(), findUser.getRoles());
-
-        User savedUser = userRepository.save(findUser);
-        UserResponseDto response = UserResponseDto.toDto(savedUser);
-
-        log.info("🚀 최종 반환할 DTO: {}", response);
-
-        return response;
+        // 4) 저장 및 DTO 변환 후 반환
+        return UserResponseDto.toDto(userRepository.save(target));
     }
-
 }
