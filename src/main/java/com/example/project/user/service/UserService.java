@@ -32,7 +32,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
-    private final JwtRefreshTokenService jwtRefreshTokenService;
     private final AuthenticationManager authenticationManager;
     private final JwtBlackListTokenService jwtBlackListTokenService;
 
@@ -58,7 +57,7 @@ public class UserService {
                 .username(userRequestDto.getUsername())
                 .password(passwordEncoder.encode(userRequestDto.getPassword()))
                 .nickname(userRequestDto.getNickname())
-                .roles(new HashSet<>(Collections.singletonList(UserRole.USER)))
+                .role(UserRole.USER)
                 .deleted(false)
                 .build();
 
@@ -74,6 +73,7 @@ public class UserService {
      * @return LoginResponseDto 로그인 응답 DTO
      */
     @Transactional
+    @SaveRefreshToken
     public LoginResponseDto login(LoginRequestDto requestDto) {
 
         User user = userRepository.findByUsername(requestDto.getUsername())
@@ -94,14 +94,14 @@ public class UserService {
         String token = jwtProvider.generateAccessToken(authentication);
         String refreshToken = jwtProvider.generateRefreshToken(authentication);
 
-        jwtRefreshTokenService.saveRefreshToken(user.getUsername(), refreshToken);
-        return LoginResponseDto.toDto(token, refreshToken);
+        return LoginResponseDto.toDto(user.getUsername(), token, refreshToken);
     }
 
     /**
      * 로그아웃
      */
     @Transactional
+    @DeleteRefreshToken
     public void logout(HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         log.debug("Authentication 객체: {}", authentication);
@@ -123,9 +123,6 @@ public class UserService {
 
         long expiration = jwtProvider.getExpiration(accessToken) - System.currentTimeMillis();
 
-        // 리프레시 토큰 삭제
-        jwtRefreshTokenService.deleteRefreshToken(authentication);
-
         // 블랙리스트에 기존 액세스 토큰 추가
         jwtBlackListTokenService.addBlackList(accessToken, expiration);
 
@@ -140,7 +137,6 @@ public class UserService {
      * @param user 회원 정보
      * @return UserResponseDto 회원 정보 응답 DTO
      */
-    @Transactional(readOnly = true)
     public UserResponseDto findUser(User user) {
         User findUser = userRepository.findById(user.getId())
                 .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
