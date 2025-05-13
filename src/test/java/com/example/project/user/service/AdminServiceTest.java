@@ -2,10 +2,12 @@ package com.example.project.user.service;
 
 import com.example.project.global.auth.JwtProvider;
 import com.example.project.global.auth.JwtRefreshTokenService;
+import com.example.project.global.config.AdminPermissionChecker;
 import com.example.project.global.exception.CustomException;
 import com.example.project.global.exception.type.UserErrorCode;
 import com.example.project.user.domain.User;
 import com.example.project.user.dto.AdminRequestDto;
+import com.example.project.user.dto.RoleChangeRequestDto;
 import com.example.project.user.dto.UserResponseDto;
 import com.example.project.user.repository.UserRepository;
 import com.example.project.user.type.UserRole;
@@ -20,10 +22,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -38,6 +37,9 @@ class AdminServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private AdminPermissionChecker adminPermissionChecker;
 
     @Mock
     private JwtProvider jwtProvider;
@@ -62,7 +64,7 @@ class AdminServiceTest {
                 .username("test")
                 .password("test")
                 .nickname("test")
-                .roles(Set.of(UserRole.USER))
+                .role(UserRole.USER)
                 .deleted(false)
                 .build();
 
@@ -70,7 +72,7 @@ class AdminServiceTest {
                 .username("admin")
                 .password("admin")
                 .nickname("admin")
-                .roles(Set.of(UserRole.ADMIN))
+                .role(UserRole.ADMIN)
                 .deleted(false)
                 .build();
 
@@ -95,22 +97,35 @@ class AdminServiceTest {
 
     @Test
     void updateRole_success() {
-        when(userRepository.findById(any())).thenReturn(Optional.of(user));
+        // given
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
-        user.setRoles(new HashSet<>(Collections.singleton(UserRole.USER)));
+        // permissionChecker.checkAdmin(admin) 기본적으로 “아무일도” 하지 않음
+        RoleChangeRequestDto dto = new RoleChangeRequestDto(UserRole.ADMIN);
 
-        UserResponseDto response = adminService.updateRole(1L, admin);
-        assertThat(response.getRoles()).contains(UserRole.ADMIN.getRoleName());
-        verify(userRepository, times(1)).save(any());
+        // when
+        UserResponseDto response = adminService.updateRole(1L, admin, dto);
 
+        // then
+        assertThat(response.getUserRole()).isEqualTo(UserRole.ADMIN);
+        verify(userRepository).save(any());
     }
 
     @Test
     void updateRole_accessDenied() {
-        lenient().when(userRepository.findById(any())).thenReturn(Optional.of(user));
-        user.setRoles(new HashSet<>(Collections.singleton(UserRole.USER)));
+        // given
+        lenient().when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        // permissionChecker가 USER일 때 예외 던지도록 설정
+        doThrow(new CustomException(UserErrorCode.ACCESS_DENIED))
+                .when(adminPermissionChecker).checkAdmin(user);
+        RoleChangeRequestDto dto = new RoleChangeRequestDto(UserRole.ADMIN);
 
-        CustomException customException = assertThrows(CustomException.class, () -> adminService.updateRole(1L, user));
-        assertThat(customException.getCode()).isEqualTo(UserErrorCode.ACCESS_DENIED.getCode());
+        // when / then
+        CustomException ex = assertThrows(
+                CustomException.class,
+                () -> adminService.updateRole(1L, user, dto)
+        );
+        assertThat(ex.getCode()).isEqualTo(UserErrorCode.ACCESS_DENIED.getCode());
+        verify(userRepository, never()).save(any());
     }
 }

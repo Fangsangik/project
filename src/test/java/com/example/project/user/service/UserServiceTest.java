@@ -21,8 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Set;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -56,7 +54,7 @@ class UserServiceTest {
                 .username("test")
                 .password("test")
                 .nickname("test")
-                .roles(Set.of(UserRole.USER))
+                .role(UserRole.USER)
                 .deleted(false)
                 .build();
     }
