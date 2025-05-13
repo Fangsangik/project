@@ -22,20 +22,17 @@ public class User {
     private String username;
     private String password;
     private String nickname;
-    @Getter
     private boolean deleted = false;
 
-    @ElementCollection
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)
-    private Set<UserRole> roles = new HashSet<>();
+    private UserRole role;
 
     @Builder
-    public User(String username, String password, String nickname, Set<UserRole> roles, boolean deleted) {
+    public User(String username, String password, String nickname, UserRole role, boolean deleted) {
         this.username = username;
         this.password = password;
         this.nickname = nickname;
-        this.roles = roles;
+        this.role = role;
         this.deleted = deleted;
     }
 
@@ -48,7 +45,7 @@ public class User {
         this.deleted = true;
     }
 
-    public void setRoles(HashSet<UserRole> userRoles) {
-        this.roles = userRoles;
+    public void changeRole(UserRole role) {
+        this.role = role;
     }
 }

@@ -1,6 +1,7 @@
 package com.example.project.user.dto;
 
 import com.example.project.user.domain.User;
+import com.example.project.user.type.UserRole;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,24 +17,21 @@ import java.util.stream.Collectors;
 public class UserResponseDto {
     private String username;
     private String nickname;
-    private List<String> roles;
+    private UserRole userRole;
 
     @Builder
-    public UserResponseDto(String username, String nickname, List<String> roles) {
+    public UserResponseDto(String username, String nickname, UserRole userRole) {
         this.username = username;
         this.nickname = nickname;
-        this.roles = roles;
+        this.userRole = userRole;
     }
 
     public static UserResponseDto toDto(User user) {
-        List<String> rolesList = user.getRoles() != null
-                ? user.getRoles().stream().map(Enum::name).collect(Collectors.toList())
-                : Collections.emptyList();
 
         return UserResponseDto.builder()
                 .username(user.getUsername())
                 .nickname(user.getNickname())
-                .roles(rolesList)
+                .userRole(user.getRole())
                 .build();
     }
 

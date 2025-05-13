@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Date;
 
 /**
  * JWT 제공자.
@@ -24,7 +24,6 @@ import java.util.*;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Getter
 public class JwtProvider {
 
     @Value("${jwt.secret_key}")
@@ -40,47 +39,35 @@ public class JwtProvider {
 
     private final UserRepository userRepository;
 
-
     /**
      * 인증 객체를 받아와 액세스 토큰을 생성하는 메서드.
-     *
-     * @param authentication 인증 객체
-     * @return 생성된 액세스 토큰
+     * 단일 역할(Role) 기반으로 수정됨.
      */
     public String generateAccessToken(Authentication authentication) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + this.expiryMillis);
 
         String username = authentication.getName();
-        // UserRoles 조회 추가
-        Set<UserRole> userRoles = getUserRoles(username);
-
-        List<String> roles = userRoles.stream()
-                .map(UserRole::getRoleName)
-                .toList();
+        UserRole role = getUserRole(username);
 
         String token = Jwts.builder()
                 .subject(username)
-                .claim("roles", roles)
+                .claim("role", role.getRoleName())
                 .issuedAt(now)
                 .expiration(expiryDate)
-                .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)), Jwts.SIG.HS256)
+                .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
                 .compact();
 
         log.info("🔹 생성된 토큰: {}", token);
         return token;
     }
 
-
     public String getUsername(String token) {
         return getClaims(token).getSubject();
     }
 
     /**
-     * 리프레시 토큰 생성.
-     *
-     * @param authentication 인증 객체
-     * @return 생성된 리프레시 토큰
+     * 리프레시 토큰 생성 (단순 username 기반)
      */
     public String generateRefreshToken(Authentication authentication) {
         String username = authentication.getName();
@@ -104,7 +91,6 @@ public class JwtProvider {
 
         return claims.getExpiration().getTime();
     }
-
 
     public boolean validToken(String token) {
         try {
@@ -130,10 +116,12 @@ public class JwtProvider {
                 .getPayload();
     }
 
-    private Set<UserRole> getUserRoles(String username) {
-        return userRepository.findByUsername(username) // DB에서 User 조회
-                .map(User::getRoles) // User 객체에서 역할(Role) 가져오기
+    /**
+     * 단일 역할(Role) 조회
+     */
+    private UserRole getUserRole(String username) {
+        return userRepository.findByUsername(username)
+                .map(User::getRole)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 }
-

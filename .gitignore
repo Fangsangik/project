@@ -35,7 +35,7 @@ out/
 .vscode/
 
 # 환경 변수 (보안)
-.env
+src/.env
 
 # 애플리케이션 설정 (보안, 상황에 따라 제외 가능)
 src/main/resources/application.properties

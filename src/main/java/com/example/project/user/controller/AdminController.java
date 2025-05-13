@@ -3,6 +3,7 @@ package com.example.project.user.controller;
 import com.example.project.global.util.UserInfo;
 import com.example.project.user.domain.User;
 import com.example.project.user.dto.AdminRequestDto;
+import com.example.project.user.dto.RoleChangeRequestDto;
 import com.example.project.user.dto.UserResponseDto;
 import com.example.project.user.service.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -56,9 +57,10 @@ public class AdminController {
     })
     @PatchMapping("/users/{id}/role")
     public ResponseEntity<UserResponseDto> updateRole(@AuthenticationPrincipal UserDetails userDetails,
-                                                      @PathVariable Long id) {
+                                                      @PathVariable Long id,
+                                                      @RequestBody RoleChangeRequestDto requestDto) {
         User admin = UserInfo.getUser(userDetails);
-        UserResponseDto response = adminService.updateRole(id, admin);
+        UserResponseDto response = adminService.updateRole(id, admin, requestDto);
 
         log.info("✅ 유저 권한 변경 완료: userId={}, 변경자={}", id, admin.getUsername());
 

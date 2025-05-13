@@ -1,5 +1,6 @@
 package com.example.project.user.dto;
 
+import com.example.project.user.type.UserRole;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
