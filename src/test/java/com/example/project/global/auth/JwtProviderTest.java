@@ -39,7 +39,7 @@ class JwtProviderTest {
                 .username("test")
                 .password("test")
                 .nickname("test")
-                .roles(Set.of(UserRole.USER))
+                .role(UserRole.USER)
                 .deleted(false)
                 .build();
 
