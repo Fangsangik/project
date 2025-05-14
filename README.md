@@ -2,7 +2,7 @@
 ## 🛠️ Tools : Java(17), SpringBoot(3.3.2), Redis, MySQL(8.0), JPA, AWS
 ## 🚩 Period : 2025.03.13 ~ 2025.03.15
 ## 🚩 Refactor : 2025.05.12 ~ 2025.05.13
-## 🔗 url : <a-href></a-href>
+## 🔗 url : <a-href>http://3.39.230.168:8080/swagger-ui/index.html</a-href>
 ## 👨‍💻 About Project
 
 ## 👨‍💻 사용자 API (/users)
@@ -67,7 +67,7 @@
       404 Not Found: 해당 유저를 찾을 수 없음
 
 ## 👨‍💻 Swagger 문서 확인  
-**엔드포인트: <a-href></a-href>** 
+**엔드포인트: <a-href>http://3.39.230.168:8080/swagger-ui/index.html</a-href>** 
 설명: API 문서를 확인하고 테스트
 
 ## 🔁 Refactoring
